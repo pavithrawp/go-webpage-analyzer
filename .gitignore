@@ -16,3 +16,7 @@ Thumbs.db
 # Build
 dist/
 tmp/
+
+# Binary output
+bin/
+server
