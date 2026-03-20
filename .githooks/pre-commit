@@ -1,0 +1,13 @@
+#!/bin/sh
+set -e
+
+echo "Running go fmt..."
+go fmt ./...
+
+echo "Running go vet..."
+go vet ./...
+
+echo "Running golangci-lint..."
+golangci-lint run ./...
+
+echo "All checks passed!"
