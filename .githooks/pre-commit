@@ -2,7 +2,10 @@
 set -e
 
 echo "Running go fmt..."
-go fmt ./...
+if [ -n "$(gofmt -l .)" ]; then
+  echo "Code is not formatted. Please run: go fmt ./..."
+  exit 1
+fi
 
 echo "Running go vet..."
 go vet ./...
