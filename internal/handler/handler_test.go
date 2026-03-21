@@ -3,12 +3,12 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+	"html/template"
 	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
 	"testing"
-	"html/template"
 
 	"github.com/pavithrawp/go-webpage-analyzer/internal/analyzer"
 )
