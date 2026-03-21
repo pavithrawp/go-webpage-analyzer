@@ -6,6 +6,12 @@ import (
 	"net/http"
 
 	"github.com/pavithrawp/go-webpage-analyzer/internal/analyzer"
+	"github.com/pavithrawp/go-webpage-analyzer/internal/validator"
+)
+
+const (
+	contentTypeJSON   = "application/json"
+	headerContentType = "Content-Type"
 )
 
 type Handler struct {
@@ -33,25 +39,37 @@ func (h *Handler) Analyze(w http.ResponseWriter, r *http.Request) {
 	var req analyzeRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		http.Error(w, "invalid request body", http.StatusBadRequest)
+		h.writeError(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
 
-	if req.URL == "" {
-		http.Error(w, "url is required", http.StatusBadRequest)
+	if err := validator.ValidateURL(req.URL); err != nil {
+		h.writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
 
 	result, err := h.analyzer.Analyze(req.URL)
 	if err != nil {
 		h.logger.Error("failed to analyze URL", "url", req.URL, "error", err)
-		http.Error(w, err.Error(), http.StatusInternalServerError)
+		h.writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
 
-	w.Header().Set("Content-Type", "application/json")
+	w.Header().Set(headerContentType, contentTypeJSON)
 	if err := json.NewEncoder(w).Encode(result); err != nil {
 		h.logger.Error("failed to encode response", "error", err)
 	}
 
+}
+
+// writeError writes a JSON error response with the given status code and message
+func (h *Handler) writeError(w http.ResponseWriter, status int, message string) {
+	w.Header().Set(headerContentType, contentTypeJSON)
+	w.WriteHeader(status)
+	if err := json.NewEncoder(w).Encode(errorResponse{
+		Success: false,
+		Error:   message,
+	}); err != nil {
+		h.logger.Error("failed to encode error response", "error", err)
+	}
 }
