@@ -5,6 +5,8 @@ import (
 	"net/http"
 	"os"
 
+	_ "net/http/pprof"
+
 	"github.com/joho/godotenv"
 	"github.com/pavithrawp/go-webpage-analyzer/internal/analyzer"
 	"github.com/pavithrawp/go-webpage-analyzer/internal/handler"
@@ -28,8 +30,15 @@ func main() {
 	pageAnalyzer := analyzer.New()
 	// register routes
 	h := handler.New(logger, pageAnalyzer)
-	mux.HandleFunc("GET /", h.Index)
+	mux.HandleFunc("GET /{$}", h.Index)
 	mux.HandleFunc("POST /analyze", h.Analyze)
+
+	// register pprof routes
+	mux.HandleFunc("/debug/pprof/", handler.PprofAuth(http.DefaultServeMux.ServeHTTP))
+	mux.HandleFunc("/debug/pprof/cmdline", handler.PprofAuth(http.DefaultServeMux.ServeHTTP))
+	mux.HandleFunc("/debug/pprof/profile", handler.PprofAuth(http.DefaultServeMux.ServeHTTP))
+	mux.HandleFunc("/debug/pprof/symbol", handler.PprofAuth(http.DefaultServeMux.ServeHTTP))
+	mux.HandleFunc("/debug/pprof/trace", handler.PprofAuth(http.DefaultServeMux.ServeHTTP))
 
 	logger.Info("server starting", "port", port)
 
