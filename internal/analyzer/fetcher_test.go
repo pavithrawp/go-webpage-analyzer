@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"errors"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -45,5 +46,27 @@ func TestFetchURL_Unreachable(t *testing.T) {
 	_, err := fetchURL("http://localhost:19999")
 	if err == nil {
 		t.Fatal("expected an error for unreachable URL, got nil")
+	}
+}
+
+// TestFetchURL_ReturnsStatusCode tests that FetchError carries the correct status code
+func TestFetchURL_StatusCode(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.WriteHeader(http.StatusNotFound)
+	}))
+	defer server.Close()
+
+	_, err := fetchURL(server.URL)
+	if err == nil {
+		t.Fatal("expected error, got nil")
+	}
+
+	var fetchErr *FetchError
+	if !errors.As(err, &fetchErr) {
+		t.Fatalf("expected FetchError, got %T", err)
+	}
+
+	if fetchErr.StatusCode != http.StatusNotFound {
+		t.Errorf("expected status 404, got %d", fetchErr.StatusCode)
 	}
 }
