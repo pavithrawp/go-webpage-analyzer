@@ -17,7 +17,7 @@ type PageData struct {
 }
 
 // parseHTML parses the HTML document and extracts all page data
-func parseHTML(body string, baseURL string) (*PageData, error) {
+func parseHTML(body string) (*PageData, error) {
 	doc, err := html.Parse(strings.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse HTML: %w", err)
@@ -28,13 +28,13 @@ func parseHTML(body string, baseURL string) (*PageData, error) {
 	}
 
 	// walk the HTML tree and extract data
-	walkNode(doc, data, baseURL)
+	walkNode(doc, data)
 
 	return data, nil
 }
 
 // walkNode recursively walks the HTML node tree and extracts page data
-func walkNode(n *html.Node, data *PageData, baseURL string) {
+func walkNode(n *html.Node, data *PageData) {
 	switch n.Type {
 	case html.DoctypeNode:
 		data.HTMLVersion = detectHTMLVersion(n)
@@ -60,7 +60,7 @@ func walkNode(n *html.Node, data *PageData, baseURL string) {
 
 	// recursively visit all child nodes
 	for child := n.FirstChild; child != nil; child = child.NextSibling {
-		walkNode(child, data, baseURL)
+		walkNode(child, data)
 	}
 }
 
