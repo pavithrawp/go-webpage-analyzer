@@ -21,7 +21,6 @@ func New() *Analyzer {
 }
 
 // Analyze fetches and analyzes the given URL
-// TODO: add parser, link checker and login form detection
 func (a *Analyzer) Analyze(url string) (*Result, error) {
 	resp, err := fetchURL(url)
 	if err != nil {
