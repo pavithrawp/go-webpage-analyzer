@@ -5,6 +5,7 @@ import (
 	"errors"
 	"log/slog"
 	"net/http"
+	"html/template"
 
 	"github.com/pavithrawp/go-webpage-analyzer/internal/analyzer"
 	"github.com/pavithrawp/go-webpage-analyzer/internal/validator"
@@ -18,20 +19,22 @@ const (
 type Handler struct {
 	logger   *slog.Logger
 	analyzer *analyzer.Analyzer
+	template *template.Template
 }
 
-func New(logger *slog.Logger, a *analyzer.Analyzer) *Handler {
+func New(logger *slog.Logger, pageAnalyzer *analyzer.Analyzer, tmpl *template.Template) *Handler {
 	return &Handler{
 		logger:   logger,
-		analyzer: a,
+		analyzer: pageAnalyzer,
+		template: tmpl,
 	}
 }
 
-// Index handles GET / and returns the status of the server
+// Index handles GET / and serves the analyzer form
 func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
-	w.WriteHeader(http.StatusOK)
-	if _, err := w.Write([]byte("Webpage Analyzer is running")); err != nil {
-		h.logger.Error("failed to write response", "error", err)
+	if err := h.template.ExecuteTemplate(w, "index.html", nil); err != nil {
+		h.logger.Error("failed to render template", "error", err)
+		http.Error(w, "failed to render page", http.StatusInternalServerError)
 	}
 }
 

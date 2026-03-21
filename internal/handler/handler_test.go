@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"testing"
+	"html/template"
 
 	"github.com/pavithrawp/go-webpage-analyzer/internal/analyzer"
 )
@@ -16,7 +17,8 @@ import (
 func setup() *Handler {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
 	a := analyzer.New()
-	return New(logger, a)
+	tmpl := template.Must(template.New("index.html").Parse(`<html></html>`))
+	return New(logger, a, tmpl)
 }
 
 // TestIndex tests that the index handler returns 200

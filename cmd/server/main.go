@@ -8,6 +8,7 @@ import (
 	"os/signal"
 	"syscall"
 	"time"
+	"html/template"
 
 	_ "net/http/pprof"
 
@@ -36,8 +37,15 @@ func main() {
 
 	pageAnalyzer := analyzer.New()
 
+	// load HTML templates
+	tmpl, err := template.ParseGlob("web/templates/*.html")
+	if err != nil {
+		logger.Error("failed to load templates", "error", err)
+		os.Exit(1)
+	}
+
 	// register routes
-	h := handler.New(logger, pageAnalyzer)
+	h := handler.New(logger, pageAnalyzer, tmpl)
 	mux.HandleFunc("GET /{$}", h.Index)
 	mux.HandleFunc("POST /analyze", h.Analyze)
 
