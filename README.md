@@ -6,6 +6,8 @@ A web application built in Go that analyzes the structure and content of any web
 
 Go Webpage Analyzer accepts a URL as input and returns a detailed analysis of the web page including HTML version, page title, heading structure, link analysis, and login form detection.
 
+
+
 ## Architecture
 ```mermaid
 graph TD
@@ -31,6 +33,8 @@ go-webpage-analyzer/
 │   │   └── links.go     # Concurrent link accessibility checker
 │   └── handler/         # HTTP request handlers
 │   └── validator/       # URL validation
+├── web/
+│   └── templates/       # HTML templates
 ```
 
 ### Component Responsibilities
@@ -40,6 +44,10 @@ go-webpage-analyzer/
 - **Link Checker** — Takes the raw list of links from the parser and concurrently checks each one.
 - **Analyzer** — Orchestrates fetcher, parser, and link checker and returns the final result.
  
+## Screenshots
+
+![Analysis Form](web/static/images/image1.png)
+![Analysis Results](web/static/images/image2.png)
 
 ## Prerequisites
 
@@ -52,6 +60,7 @@ go-webpage-analyzer/
 | Package | Purpose |
 |---------|---------|
 | github.com/joho/godotenv | Environment variables |
+| golang.org/x/net/html | HTML parsing |
 
 
 
@@ -82,7 +91,7 @@ go run cmd/server/main.go
  
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | / | |
+| GET | / | Serves the analyzer form |
 | POST | /analyze | Analyzes the given URL |
 
 
