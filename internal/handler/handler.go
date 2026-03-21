@@ -2,6 +2,7 @@ package handler
 
 import (
 	"encoding/json"
+	"errors"
 	"log/slog"
 	"net/http"
 
@@ -51,6 +52,14 @@ func (h *Handler) Analyze(w http.ResponseWriter, r *http.Request) {
 	result, err := h.analyzer.Analyze(req.URL)
 	if err != nil {
 		h.logger.Error("failed to analyze URL", "url", req.URL, "error", err)
+
+		// check if it's a FetchError to return the correct HTTP status code
+		var fetchErr *analyzer.FetchError
+		if errors.As(err, &fetchErr) {
+			h.writeError(w, fetchErr.StatusCode, fetchErr.Error())
+			return
+		}
+
 		h.writeError(w, http.StatusInternalServerError, err.Error())
 		return
 	}
