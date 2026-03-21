@@ -30,6 +30,7 @@ go-webpage-analyzer/
 │   │   ├── parser.go    # Parses HTML and extracts data
 │   │   └── links.go     # Concurrent link accessibility checker
 │   └── handler/         # HTTP request handlers
+│   └── validator/       # URL validation
 ```
 
 ### Component Responsibilities
