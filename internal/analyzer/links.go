@@ -1,0 +1,157 @@
+package analyzer
+
+import (
+	"net/http"
+	"net/url"
+	"sync"
+	"time"
+)
+
+// the number of concurrent workers for link checking
+const workerCount = 20
+
+// the maximum time to wait for a link to respond
+const linkCheckTimeout = 10 * time.Second
+
+// holds the result of checking a single link
+type LinkResult struct {
+	URL          string
+	IsInternal   bool
+	IsAccessible bool
+}
+
+// holds the final summary of all links
+type LinkSummary struct {
+	InternalCount     int
+	ExternalCount     int
+	InaccessibleCount int
+	Results           []LinkResult
+}
+
+// checkLinks classifies and concurrently checks all links for accessibility
+func checkLinks(links []string, baseURL string) *LinkSummary {
+	if len(links) == 0 {
+		return &LinkSummary{}
+	}
+
+	// converts relative URLs to full URLs
+	var resolvedLinks []string
+	for _, link := range links {
+		resolved := resolveLink(link, baseURL)
+		if resolved != "" {
+			resolvedLinks = append(resolvedLinks, resolved)
+		}
+	}
+
+	if len(resolvedLinks) == 0 {
+		return &LinkSummary{}
+	}
+
+	// set the buffer size to the number of links. so that we can send all links into the channel without blocking
+	jobs := make(chan string, len(resolvedLinks))
+	results := make(chan LinkResult, len(resolvedLinks))
+
+	// start worker pool
+	var wg sync.WaitGroup
+	for i := 0; i < workerCount; i++ {
+		wg.Add(1)
+		go func() {
+			defer wg.Done()
+			for link := range jobs {
+				isInternal := isInternalLink(link, baseURL)
+				isAccessible := isLinkAccessible(link)
+				results <- LinkResult{
+					URL:          link,
+					IsInternal:   isInternal,
+					IsAccessible: isAccessible,
+				}
+			}
+		}()
+	}
+
+	// send resolved links to workers
+	for _, link := range resolvedLinks {
+		jobs <- link
+	}
+	close(jobs)
+
+	// wait for all workers to finish then close results
+	go func() {
+		wg.Wait()
+		close(results)
+	}()
+
+	// collect results
+	summary := &LinkSummary{}
+	for result := range results {
+		summary.Results = append(summary.Results, result)
+		if result.IsInternal {
+			summary.InternalCount++
+		} else {
+			summary.ExternalCount++
+		}
+		if !result.IsAccessible {
+			summary.InaccessibleCount++
+		}
+	}
+
+	return summary
+}
+
+// isInternalLink checks if the link belongs to the same domain as the base URL
+func isInternalLink(link, baseURL string) bool {
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		return false
+	}
+
+	parsed, err := url.Parse(link)
+	if err != nil {
+		return false
+	}
+
+	// relative URLs are internal
+	if !parsed.IsAbs() {
+		return true
+	}
+
+	return parsed.Host == base.Host
+}
+
+// isLinkAccessible checks if the link is accessible by making a HEAD request
+func isLinkAccessible(link string) bool {
+	client := &http.Client{
+		Timeout: linkCheckTimeout,
+	}
+
+	// used head just know if the link is alive.
+	resp, err := client.Head(link)
+	if err != nil {
+		return false
+	}
+	defer func() { _ = resp.Body.Close() }()
+
+	return resp.StatusCode < 400
+}
+
+// resolveLink converts relative URLs to full URLs
+func resolveLink(link, baseURL string) string {
+
+	// ignore anchor links
+	if len(link) == 0 || link[0] == '#' {
+		return ""
+	}
+
+	base, err := url.Parse(baseURL)
+	if err != nil {
+		return ""
+	}
+
+	parsed, err := url.Parse(link)
+	if err != nil {
+		return ""
+	}
+
+	// resolve relative URLs against base
+	return base.ResolveReference(parsed).String()
+}

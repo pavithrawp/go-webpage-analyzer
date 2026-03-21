@@ -83,3 +83,11 @@ go run cmd/server/main.go
 |--------|----------|-------------|
 | GET | / | |
 | POST | /analyze | Analyzes the given URL |
+
+
+
+## Possible Improvements (TODOs)
+
+- Add support for JavaScript-rendered pages using a headless browser
+- Add caching layer
+- Add rate limiting
