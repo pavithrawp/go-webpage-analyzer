@@ -21,7 +21,7 @@ func fetchURL(url string) (*http.Response, error) {
 	}
 
 	if resp.StatusCode != http.StatusOK {
-		resp.Body.Close()
+		_ = resp.Body.Close()
 		return nil, fmt.Errorf("URL returned status %d: %s", resp.StatusCode, http.StatusText(resp.StatusCode))
 	}
 
