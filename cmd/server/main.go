@@ -6,6 +6,7 @@ import (
 	"os"
 
 	"github.com/joho/godotenv"
+	"github.com/pavithrawp/go-webpage-analyzer/internal/analyzer"
 	"github.com/pavithrawp/go-webpage-analyzer/internal/handler"
 )
 
@@ -24,8 +25,9 @@ func main() {
 
 	mux := http.NewServeMux()
 
+	pageAnalyzer := analyzer.New()
 	// register routes
-	h := handler.New(logger)
+	h := handler.New(logger, pageAnalyzer)
 	mux.HandleFunc("GET /", h.Index)
 	mux.HandleFunc("POST /analyze", h.Analyze)
 
