@@ -2,13 +2,13 @@ package main
 
 import (
 	"context"
+	"html/template"
 	"log/slog"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
-	"html/template"
 
 	_ "net/http/pprof"
 

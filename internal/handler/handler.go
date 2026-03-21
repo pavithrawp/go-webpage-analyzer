@@ -3,9 +3,9 @@ package handler
 import (
 	"encoding/json"
 	"errors"
+	"html/template"
 	"log/slog"
 	"net/http"
-	"html/template"
 
 	"github.com/pavithrawp/go-webpage-analyzer/internal/analyzer"
 	"github.com/pavithrawp/go-webpage-analyzer/internal/validator"
