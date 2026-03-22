@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 )
 
@@ -137,6 +138,16 @@ func resolveLink(link, baseURL string) string {
 
 	// ignore anchor links
 	if len(link) == 0 || link[0] == '#' {
+		return ""
+	}
+
+	// filter out non HTTP schemes
+	lower := strings.ToLower(link)
+	if strings.HasPrefix(lower, "mailto:") ||
+		strings.HasPrefix(lower, "javascript:") ||
+		strings.HasPrefix(lower, "tel:") ||
+		strings.HasPrefix(lower, "data:") ||
+		strings.HasPrefix(lower, "ftp:") {
 		return ""
 	}
 
