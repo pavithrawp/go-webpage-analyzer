@@ -1,5 +1,7 @@
-name: Build and Deploy to Azure
+name: Build and Deploy to Azure (Staging)
 
+
+# TODO: trigger on version tags (v*) instead of direct push to main for PROD releases
 on:
   push:
     branches: [main]
