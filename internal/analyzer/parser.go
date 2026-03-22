@@ -2,8 +2,8 @@ package analyzer
 
 import (
 	"fmt"
-	"strings"
 	"io"
+	"strings"
 
 	"golang.org/x/net/html"
 )

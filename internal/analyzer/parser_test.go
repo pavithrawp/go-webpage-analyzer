@@ -1,8 +1,8 @@
 package analyzer
 
 import (
-	"testing"
 	"strings"
+	"testing"
 )
 
 // TestParseHTML_HTML5 tests that HTML5 is detected correctly
