@@ -213,3 +213,22 @@ make clean          # Remove build artifacts
 - Add streaming HTML parsing to avoid loading the full page into memory for very large pages
 - Export results as PDF or JSON
 
+## Deployment Architecture
+```mermaid
+graph LR
+    A[Developer] -->|git push| B[GitHub]
+    B -->|GitHub Actions| C[Azure Container Registry]
+    C -->|Deploy| D[Azure Container Apps]
+    D -->|Serve| E[User]
+```
+
+## Live Demo
+
+The application is deployed and accessible at:
+```
+https://go-webpage-analyzer.blacksky-dcf644d4.southindia.azurecontainerapps.io/
+```
+
+> Note: The application is publicly accessible for evaluation purposes.
+> In a production environment authentication would be added.
+
