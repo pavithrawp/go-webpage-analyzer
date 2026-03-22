@@ -5,6 +5,10 @@ name: Build and Deploy to Azure (Staging)
 on:
   push:
     branches: [main]
+    paths-ignore:
+      - 'README.md'
+      - 'docs/**'
+      - '*.md'
   workflow_dispatch:
 
 jobs:
