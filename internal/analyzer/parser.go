@@ -42,9 +42,7 @@ func walkNode(n *html.Node, data *PageData) {
 	case html.ElementNode:
 		switch n.Data {
 		case "title":
-			if n.FirstChild != nil {
-				data.Title = n.FirstChild.Data
-			}
+			extractText(n)
 		case "h1", "h2", "h3", "h4", "h5", "h6":
 			data.Headings[n.Data]++
 		case "a":
@@ -62,6 +60,17 @@ func walkNode(n *html.Node, data *PageData) {
 	for child := n.FirstChild; child != nil; child = child.NextSibling {
 		walkNode(child, data)
 	}
+}
+
+// extractText walks all child nodes and concatenates their text content
+func extractText(n *html.Node) string {
+	var text string
+	for child := n.FirstChild; child != nil; child = child.NextSibling {
+		if child.Type == html.TextNode {
+			text += child.Data
+		}
+	}
+	return strings.TrimSpace(text)
 }
 
 // detectHTMLVersion detects the HTML version from the DOCTYPE node
