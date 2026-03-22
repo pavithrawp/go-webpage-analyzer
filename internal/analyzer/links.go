@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"context"
 	"net/http"
 	"net/url"
 	"sync"
@@ -29,7 +30,7 @@ type LinkSummary struct {
 }
 
 // checkLinks classifies and concurrently checks all links for accessibility
-func checkLinks(links []string, baseURL string) *LinkSummary {
+func checkLinks(ctx context.Context, links []string, baseURL string) *LinkSummary {
 	if len(links) == 0 {
 		return &LinkSummary{}
 	}
@@ -59,7 +60,7 @@ func checkLinks(links []string, baseURL string) *LinkSummary {
 			defer wg.Done()
 			for link := range jobs {
 				isInternal := isInternalLink(link, baseURL)
-				isAccessible := isLinkAccessible(link)
+				isAccessible := isLinkAccessible(ctx, link)
 				results <- LinkResult{
 					URL:          link,
 					IsInternal:   isInternal,
@@ -119,13 +120,18 @@ func isInternalLink(link, baseURL string) bool {
 }
 
 // isLinkAccessible checks if the link is accessible by making a HEAD request
-func isLinkAccessible(link string) bool {
+func isLinkAccessible(ctx context.Context, link string) bool {
 	client := &http.Client{
 		Timeout: linkCheckTimeout,
 	}
 
 	// used head just know if the link is alive.
-	resp, err := client.Head(link)
+	req, err := http.NewRequestWithContext(ctx, http.MethodHead, link, nil)
+	if err != nil {
+		return false
+	}
+
+	resp, err := client.Do(req)
 	if err != nil {
 		return false
 	}

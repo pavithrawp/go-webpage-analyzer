@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"html/template"
@@ -12,7 +13,7 @@ import (
 )
 
 type PageAnalyzer interface {
-	Analyze(url string) (*analyzer.Result, error)
+	Analyze(ctx context.Context, url string) (*analyzer.Result, error)
 }
 
 const (
@@ -56,7 +57,7 @@ func (h *Handler) Analyze(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	result, err := h.analyzer.Analyze(req.URL)
+	result, err := h.analyzer.Analyze(r.Context(), req.URL)
 	if err != nil {
 		h.logger.Error("failed to analyze URL", "url", req.URL, "error", err)
 
