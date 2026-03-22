@@ -1,0 +1,16 @@
+#!/bin/sh
+set -e
+
+echo "Running go fmt..."
+if [ -n "$(gofmt -l .)" ]; then
+  echo "Code is not formatted. Please run: go fmt ./..."
+  exit 1
+fi
+
+echo "Running go vet..."
+go vet ./...
+
+echo "Running golangci-lint..."
+golangci-lint run ./...
+
+echo "All checks passed!"
