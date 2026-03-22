@@ -4,7 +4,6 @@ import (
 	"context"
 	"fmt"
 	"net/http"
-	"time"
 )
 
 // FetchError represents an error that occurred while fetching a URL.
@@ -18,24 +17,17 @@ func (e *FetchError) Error() string {
 	return fmt.Sprintf("URL returned status %d: %s", e.StatusCode, e.Message)
 }
 
-// Default timeout for the URL to respond
-const defaultTimeout = 10 * time.Second
-
 // fetchURL fetches the HTML content from the given URL and throw an error if the URL is unreachable
 // Note: this uses a standard HTTP client and does not execute JavaScript.
 // Pages that rely on client-side rendering (React, Angular, Vue) may return
 // incomplete content as the JavaScript is not executed before parsing.
-func fetchURL(ctx context.Context, url string) (*http.Response, error) {
-	client := &http.Client{
-		Timeout: defaultTimeout,
-	}
-
+func (a *Analyzer) fetchURL(ctx context.Context, url string) (*http.Response, error) {
 	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
 
-	resp, err := client.Do(req)
+	resp, err := a.httpClient.Do(req)
 	if err != nil {
 		return nil, fmt.Errorf("failed to reach URL: %w", err)
 	}

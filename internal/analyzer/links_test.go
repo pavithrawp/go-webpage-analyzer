@@ -58,7 +58,8 @@ func TestIsLinkAccessible_Accessible(t *testing.T) {
 	}))
 	defer server.Close()
 
-	if !isLinkAccessible(context.Background(), server.URL) {
+	a := New()
+	if !a.isLinkAccessible(context.Background(), server.URL) {
 		t.Error("expected link to be accessible")
 	}
 }
@@ -70,14 +71,16 @@ func TestIsLinkAccessible_NotFound(t *testing.T) {
 	}))
 	defer server.Close()
 
-	if isLinkAccessible(context.Background(), server.URL) {
+	a := New()
+	if a.isLinkAccessible(context.Background(), server.URL) {
 		t.Error("expected link to be inaccessible")
 	}
 }
 
 // TestIsLinkAccessible_Unreachable tests that unreachable links return false
 func TestIsLinkAccessible_Unreachable(t *testing.T) {
-	if isLinkAccessible(context.Background(), "http://localhost:19999") {
+	a := New()
+	if a.isLinkAccessible(context.Background(), "http://localhost:19999") {
 		t.Error("expected link to be inaccessible")
 	}
 }
@@ -100,7 +103,8 @@ func TestCheckLinks(t *testing.T) {
 		server.URL + "/about", // internal - same host as baseURL
 	}
 
-	summary := checkLinks(context.Background(), links, server.URL)
+	a := New()
+	summary := a.checkLinks(context.Background(), links, server.URL)
 
 	if summary.InternalCount != 1 {
 		t.Errorf("expected 1 internal link, got %d", summary.InternalCount)

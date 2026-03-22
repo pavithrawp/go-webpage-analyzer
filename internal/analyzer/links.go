@@ -5,14 +5,10 @@ import (
 	"net/http"
 	"net/url"
 	"sync"
-	"time"
 )
 
 // the number of concurrent workers for link checking
 const workerCount = 20
-
-// the maximum time to wait for a link to respond
-const linkCheckTimeout = 10 * time.Second
 
 // holds the result of checking a single link
 type LinkResult struct {
@@ -30,7 +26,7 @@ type LinkSummary struct {
 }
 
 // checkLinks classifies and concurrently checks all links for accessibility
-func checkLinks(ctx context.Context, links []string, baseURL string) *LinkSummary {
+func (a *Analyzer) checkLinks(ctx context.Context, links []string, baseURL string) *LinkSummary {
 	if len(links) == 0 {
 		return &LinkSummary{}
 	}
@@ -60,7 +56,7 @@ func checkLinks(ctx context.Context, links []string, baseURL string) *LinkSummar
 			defer wg.Done()
 			for link := range jobs {
 				isInternal := isInternalLink(link, baseURL)
-				isAccessible := isLinkAccessible(ctx, link)
+				isAccessible := a.isLinkAccessible(ctx, link)
 				results <- LinkResult{
 					URL:          link,
 					IsInternal:   isInternal,
@@ -120,18 +116,14 @@ func isInternalLink(link, baseURL string) bool {
 }
 
 // isLinkAccessible checks if the link is accessible by making a HEAD request
-func isLinkAccessible(ctx context.Context, link string) bool {
-	client := &http.Client{
-		Timeout: linkCheckTimeout,
-	}
-
+func (a *Analyzer) isLinkAccessible(ctx context.Context, link string) bool {
 	// used head just know if the link is alive.
 	req, err := http.NewRequestWithContext(ctx, http.MethodHead, link, nil)
 	if err != nil {
 		return false
 	}
 
-	resp, err := client.Do(req)
+	resp, err := a.httpClient.Do(req)
 	if err != nil {
 		return false
 	}
