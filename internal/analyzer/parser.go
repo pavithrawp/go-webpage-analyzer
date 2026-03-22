@@ -7,8 +7,8 @@ import (
 	"golang.org/x/net/html"
 )
 
-// PageData holds all extracted data from a parsed HTML page
-type PageData struct {
+// pageData holds all extracted data from a parsed HTML page
+type pageData struct {
 	HTMLVersion  string
 	Title        string
 	Headings     map[string]int
@@ -17,13 +17,13 @@ type PageData struct {
 }
 
 // parseHTML parses the HTML document and extracts all page data
-func parseHTML(body string) (*PageData, error) {
+func parseHTML(body string) (*pageData, error) {
 	doc, err := html.Parse(strings.NewReader(body))
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse HTML: %w", err)
 	}
 
-	data := &PageData{
+	data := &pageData{
 		Headings: make(map[string]int),
 	}
 
@@ -34,7 +34,7 @@ func parseHTML(body string) (*PageData, error) {
 }
 
 // walkNode recursively walks the HTML node tree and extracts page data
-func walkNode(n *html.Node, data *PageData) {
+func walkNode(n *html.Node, data *pageData) {
 	switch n.Type {
 	case html.DoctypeNode:
 		data.HTMLVersion = detectHTMLVersion(n)
