@@ -64,7 +64,7 @@ func (h *Handler) Analyze(w http.ResponseWriter, r *http.Request) {
 		// check if it's a FetchError to return the correct HTTP status code
 		var fetchErr *analyzer.FetchError
 		if errors.As(err, &fetchErr) {
-			h.writeError(w, fetchErr.StatusCode, fetchErr.Error())
+			h.writeError(w, http.StatusBadGateway, fetchErr.Error())
 			return
 		}
 
