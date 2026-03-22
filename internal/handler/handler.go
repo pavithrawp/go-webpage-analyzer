@@ -4,12 +4,13 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
+	"net/url"
 
 	"github.com/pavithrawp/go-webpage-analyzer/internal/analyzer"
-	"github.com/pavithrawp/go-webpage-analyzer/internal/validator"
 )
 
 type PageAnalyzer interface {
@@ -56,7 +57,7 @@ func (h *Handler) Analyze(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := validator.ValidateURL(req.URL); err != nil {
+	if err := validateURL(req.URL); err != nil {
 		h.writeError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -93,4 +94,26 @@ func (h *Handler) writeError(w http.ResponseWriter, status int, message string) 
 	}); err != nil {
 		h.logger.Error("failed to encode error response", "error", err)
 	}
+}
+
+// validateURL validates the given URL and returns an error if it is invalid
+func validateURL(rawURL string) error {
+	if rawURL == "" {
+		return fmt.Errorf("URL is required")
+	}
+
+	parsed, err := url.ParseRequestURI(rawURL)
+	if err != nil {
+		return fmt.Errorf("invalid URL: %w", err)
+	}
+
+	if parsed.Scheme != "http" && parsed.Scheme != "https" {
+		return fmt.Errorf("invalid URL: must start with http:// or https://")
+	}
+
+	if parsed.Host == "" {
+		return fmt.Errorf("invalid URL: missing host")
+	}
+
+	return nil
 }
