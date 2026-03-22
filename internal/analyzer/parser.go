@@ -42,7 +42,7 @@ func walkNode(n *html.Node, data *PageData) {
 	case html.ElementNode:
 		switch n.Data {
 		case "title":
-			extractText(n)
+			data.Title = extractText(n)
 		case "h1", "h2", "h3", "h4", "h5", "h6":
 			data.Headings[n.Data]++
 		case "a":

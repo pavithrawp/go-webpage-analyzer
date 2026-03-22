@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"net/http"
+	"strings"
 )
 
 // FetchError represents an error that occurred while fetching a URL.
@@ -11,6 +12,11 @@ type FetchError struct {
 	StatusCode int
 	Message    string
 }
+
+const (
+	contentTypeHTML   = "text/html"
+	headerContentType = "Content-Type"
+)
 
 // Error implements the error interface
 func (e *FetchError) Error() string {
@@ -38,6 +44,12 @@ func (a *Analyzer) fetchURL(ctx context.Context, url string) (*http.Response, er
 			StatusCode: resp.StatusCode,
 			Message:    http.StatusText(resp.StatusCode),
 		}
+	}
+
+	contentType := resp.Header.Get(headerContentType)
+	if !strings.Contains(contentType, contentTypeHTML) {
+		_ = resp.Body.Close()
+		return nil, fmt.Errorf("URL does not point to an HTML page, got Content-Type: %s", contentType)
 	}
 
 	return resp, nil
