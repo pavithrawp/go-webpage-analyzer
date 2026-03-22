@@ -2,13 +2,14 @@ package analyzer
 
 import (
 	"fmt"
+	"io"
 	"strings"
 
 	"golang.org/x/net/html"
 )
 
-// PageData holds all extracted data from a parsed HTML page
-type PageData struct {
+// pageData holds all extracted data from a parsed HTML page
+type pageData struct {
 	HTMLVersion  string
 	Title        string
 	Headings     map[string]int
@@ -17,13 +18,13 @@ type PageData struct {
 }
 
 // parseHTML parses the HTML document and extracts all page data
-func parseHTML(body string) (*PageData, error) {
-	doc, err := html.Parse(strings.NewReader(body))
+func parseHTML(r io.Reader) (*pageData, error) {
+	doc, err := html.Parse(r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse HTML: %w", err)
 	}
 
-	data := &PageData{
+	data := &pageData{
 		Headings: make(map[string]int),
 	}
 
@@ -34,7 +35,7 @@ func parseHTML(body string) (*PageData, error) {
 }
 
 // walkNode recursively walks the HTML node tree and extracts page data
-func walkNode(n *html.Node, data *PageData) {
+func walkNode(n *html.Node, data *pageData) {
 	switch n.Type {
 	case html.DoctypeNode:
 		data.HTMLVersion = detectHTMLVersion(n)
@@ -42,9 +43,7 @@ func walkNode(n *html.Node, data *PageData) {
 	case html.ElementNode:
 		switch n.Data {
 		case "title":
-			if n.FirstChild != nil {
-				data.Title = n.FirstChild.Data
-			}
+			data.Title = extractText(n)
 		case "h1", "h2", "h3", "h4", "h5", "h6":
 			data.Headings[n.Data]++
 		case "a":
@@ -62,6 +61,17 @@ func walkNode(n *html.Node, data *PageData) {
 	for child := n.FirstChild; child != nil; child = child.NextSibling {
 		walkNode(child, data)
 	}
+}
+
+// extractText walks all child nodes and concatenates their text content
+func extractText(n *html.Node) string {
+	var text string
+	for child := n.FirstChild; child != nil; child = child.NextSibling {
+		if child.Type == html.TextNode {
+			text += child.Data
+		}
+	}
+	return strings.TrimSpace(text)
 }
 
 // detectHTMLVersion detects the HTML version from the DOCTYPE node

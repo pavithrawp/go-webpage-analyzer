@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"strings"
 	"testing"
 )
 
@@ -12,7 +13,7 @@ func TestParseHTML_HTML5(t *testing.T) {
 		<body><h1>Hello</h1></body>
 	</html>`
 
-	data, err := parseHTML(body)
+	data, err := parseHTML(strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -31,7 +32,7 @@ func TestParseHTML_HTML401(t *testing.T) {
 		<body></body>
 	</html>`
 
-	data, err := parseHTML(body)
+	data, err := parseHTML(strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -49,7 +50,7 @@ func TestParseHTML_Title(t *testing.T) {
 		<body></body>
 	</html>`
 
-	data, err := parseHTML(body)
+	data, err := parseHTML(strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -71,7 +72,7 @@ func TestParseHTML_Headings(t *testing.T) {
 		</body>
 	</html>`
 
-	data, err := parseHTML(body)
+	data, err := parseHTML(strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -98,7 +99,7 @@ func TestParseHTML_Links(t *testing.T) {
 		</body>
 	</html>`
 
-	data, err := parseHTML(body)
+	data, err := parseHTML(strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -122,7 +123,7 @@ func TestParseHTML_LoginForm(t *testing.T) {
 		</body>
 	</html>`
 
-	data, err := parseHTML(body)
+	data, err := parseHTML(strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -144,7 +145,7 @@ func TestParseHTML_NoLoginForm(t *testing.T) {
 		</body>
 	</html>`
 
-	data, err := parseHTML(body)
+	data, err := parseHTML(strings.NewReader(body))
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}

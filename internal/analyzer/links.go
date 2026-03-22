@@ -4,6 +4,7 @@ import (
 	"context"
 	"net/http"
 	"net/url"
+	"strings"
 	"sync"
 )
 
@@ -11,24 +12,24 @@ import (
 const workerCount = 20
 
 // holds the result of checking a single link
-type LinkResult struct {
+type linkResult struct {
 	URL          string
 	IsInternal   bool
 	IsAccessible bool
 }
 
 // holds the final summary of all links
-type LinkSummary struct {
+type linkSummary struct {
 	InternalCount     int
 	ExternalCount     int
 	InaccessibleCount int
-	Results           []LinkResult
+	Results           []linkResult
 }
 
 // checkLinks classifies and concurrently checks all links for accessibility
-func (a *Analyzer) checkLinks(ctx context.Context, links []string, baseURL string) *LinkSummary {
+func (a *Analyzer) checkLinks(ctx context.Context, links []string, baseURL string) *linkSummary {
 	if len(links) == 0 {
-		return &LinkSummary{}
+		return &linkSummary{}
 	}
 
 	// converts relative URLs to full URLs
@@ -41,12 +42,12 @@ func (a *Analyzer) checkLinks(ctx context.Context, links []string, baseURL strin
 	}
 
 	if len(resolvedLinks) == 0 {
-		return &LinkSummary{}
+		return &linkSummary{}
 	}
 
 	// set the buffer size to the number of links. so that we can send all links into the channel without blocking
 	jobs := make(chan string, len(resolvedLinks))
-	results := make(chan LinkResult, len(resolvedLinks))
+	results := make(chan linkResult, len(resolvedLinks))
 
 	// start worker pool
 	var wg sync.WaitGroup
@@ -57,7 +58,7 @@ func (a *Analyzer) checkLinks(ctx context.Context, links []string, baseURL strin
 			for link := range jobs {
 				isInternal := isInternalLink(link, baseURL)
 				isAccessible := a.isLinkAccessible(ctx, link)
-				results <- LinkResult{
+				results <- linkResult{
 					URL:          link,
 					IsInternal:   isInternal,
 					IsAccessible: isAccessible,
@@ -79,7 +80,7 @@ func (a *Analyzer) checkLinks(ctx context.Context, links []string, baseURL strin
 	}()
 
 	// collect results
-	summary := &LinkSummary{}
+	summary := &linkSummary{}
 	for result := range results {
 		summary.Results = append(summary.Results, result)
 		if result.IsInternal {
@@ -137,6 +138,16 @@ func resolveLink(link, baseURL string) string {
 
 	// ignore anchor links
 	if len(link) == 0 || link[0] == '#' {
+		return ""
+	}
+
+	// filter out non HTTP schemes
+	lower := strings.ToLower(link)
+	if strings.HasPrefix(lower, "mailto:") ||
+		strings.HasPrefix(lower, "javascript:") ||
+		strings.HasPrefix(lower, "tel:") ||
+		strings.HasPrefix(lower, "data:") ||
+		strings.HasPrefix(lower, "ftp:") {
 		return ""
 	}
 

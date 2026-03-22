@@ -3,7 +3,6 @@ package analyzer
 import (
 	"context"
 	"fmt"
-	"io"
 	"net/http"
 	"time"
 )
@@ -47,12 +46,7 @@ func (a *Analyzer) Analyze(ctx context.Context, url string) (*Result, error) {
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	body, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("failed to read response body: %w", err)
-	}
-
-	pageData, err := parseHTML(string(body))
+	pageData, err := parseHTML(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse HTML: %w", err)
 	}
