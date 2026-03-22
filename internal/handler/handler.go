@@ -11,6 +11,10 @@ import (
 	"github.com/pavithrawp/go-webpage-analyzer/internal/validator"
 )
 
+type PageAnalyzer interface {
+	Analyze(url string) (*analyzer.Result, error)
+}
+
 const (
 	contentTypeJSON   = "application/json"
 	headerContentType = "Content-Type"
@@ -18,11 +22,11 @@ const (
 
 type Handler struct {
 	logger   *slog.Logger
-	analyzer *analyzer.Analyzer
+	analyzer PageAnalyzer
 	template *template.Template
 }
 
-func New(logger *slog.Logger, pageAnalyzer *analyzer.Analyzer, tmpl *template.Template) *Handler {
+func New(logger *slog.Logger, pageAnalyzer PageAnalyzer, tmpl *template.Template) *Handler {
 	return &Handler{
 		logger:   logger,
 		analyzer: pageAnalyzer,

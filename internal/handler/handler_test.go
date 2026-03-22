@@ -3,6 +3,7 @@ package handler
 import (
 	"bytes"
 	"encoding/json"
+	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
@@ -13,17 +14,25 @@ import (
 	"github.com/pavithrawp/go-webpage-analyzer/internal/analyzer"
 )
 
+type mockAnalyzer struct {
+	result *analyzer.Result
+	err    error
+}
+
+func (m *mockAnalyzer) Analyze(url string) (*analyzer.Result, error) {
+	return m.result, m.err
+}
+
 // setup creates a test handler with a real analyzer and logger
-func setup() *Handler {
+func setup(result *analyzer.Result, err error) *Handler {
 	logger := slog.New(slog.NewTextHandler(os.Stdout, nil))
-	a := analyzer.New()
 	tmpl := template.Must(template.New("index.html").Parse(`<html></html>`))
-	return New(logger, a, tmpl)
+	return New(logger, &mockAnalyzer{result: result, err: err}, tmpl)
 }
 
 // TestIndex tests that the index handler returns 200
 func TestIndex(t *testing.T) {
-	h := setup()
+	h := setup(nil, nil)
 
 	req := httptest.NewRequest(http.MethodGet, "/", nil)
 	w := httptest.NewRecorder()
@@ -37,7 +46,7 @@ func TestIndex(t *testing.T) {
 
 // TestAnalyze_InvalidBody tests that an invalid request body returns 400
 func TestAnalyze_InvalidBody(t *testing.T) {
-	h := setup()
+	h := setup(nil, nil)
 
 	req := httptest.NewRequest(http.MethodPost, "/analyze", bytes.NewBufferString("invalid json"))
 	w := httptest.NewRecorder()
@@ -60,7 +69,7 @@ func TestAnalyze_InvalidBody(t *testing.T) {
 
 // TestAnalyze_EmptyURL tests that an empty URL returns 400
 func TestAnalyze_EmptyURL(t *testing.T) {
-	h := setup()
+	h := setup(nil, nil)
 
 	body := `{"url": ""}`
 	req := httptest.NewRequest(http.MethodPost, "/analyze", bytes.NewBufferString(body))
@@ -75,7 +84,7 @@ func TestAnalyze_EmptyURL(t *testing.T) {
 
 // TestAnalyze_InvalidURL tests that an invalid URL returns 400
 func TestAnalyze_InvalidURL(t *testing.T) {
-	h := setup()
+	h := setup(nil, nil)
 
 	body := `{"url": "abcd"}`
 	req := httptest.NewRequest(http.MethodPost, "/analyze", bytes.NewBufferString(body))
@@ -99,22 +108,16 @@ func TestAnalyze_InvalidURL(t *testing.T) {
 
 // TestAnalyze_ValidURL tests that a valid URL returns 200 with a result
 func TestAnalyze_ValidURL(t *testing.T) {
-	// create a fake server to analyze
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.WriteHeader(http.StatusOK)
-		if _, err := w.Write([]byte(`<!DOCTYPE html>
-		<html>
-			<head><title>Test Page</title></head>
-			<body><h1>Hello</h1></body>
-		</html>`)); err != nil {
-			t.Errorf("failed to write response: %v", err)
-		}
-	}))
-	defer server.Close()
+	res := &analyzer.Result{
+		HTMLVersion:  "HTML5",
+		Title:        "Test Page",
+		Headings:     map[string]int{"h1": 1},
+		HasLoginForm: false,
+	}
 
-	h := setup()
+	h := setup(res, nil)
 
-	body, _ := json.Marshal(map[string]string{"url": server.URL})
+	body, _ := json.Marshal(map[string]string{"url": "https://abcd.com"})
 	req := httptest.NewRequest(http.MethodPost, "/analyze", bytes.NewBuffer(body))
 	w := httptest.NewRecorder()
 
@@ -136,7 +139,7 @@ func TestAnalyze_ValidURL(t *testing.T) {
 
 // TestAnalyze_UnreachableURL tests that an unreachable URL returns an error
 func TestAnalyze_UnreachableURL(t *testing.T) {
-	h := setup()
+	h := setup(nil, fmt.Errorf("something went wrong"))
 
 	body := `{"url": "http://localhost:19999"}`
 	req := httptest.NewRequest(http.MethodPost, "/analyze", bytes.NewBufferString(body))
