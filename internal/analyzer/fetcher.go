@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"time"
@@ -12,6 +13,11 @@ type FetchError struct {
 	Message    string
 }
 
+// Error implements the error interface
+func (e *FetchError) Error() string {
+	return fmt.Sprintf("URL returned status %d: %s", e.StatusCode, e.Message)
+}
+
 // Default timeout for the URL to respond
 const defaultTimeout = 10 * time.Second
 
@@ -19,14 +25,19 @@ const defaultTimeout = 10 * time.Second
 // Note: this uses a standard HTTP client and does not execute JavaScript.
 // Pages that rely on client-side rendering (React, Angular, Vue) may return
 // incomplete content as the JavaScript is not executed before parsing.
-func fetchURL(url string) (*http.Response, error) {
+func fetchURL(ctx context.Context, url string) (*http.Response, error) {
 	client := &http.Client{
 		Timeout: defaultTimeout,
 	}
 
-	resp, err := client.Get(url)
+	req, err := http.NewRequestWithContext(ctx, http.MethodGet, url, nil)
 	if err != nil {
-		return nil, fmt.Errorf("failed to get URL: %w", err)
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to reach URL: %w", err)
 	}
 
 	if resp.StatusCode != http.StatusOK {
@@ -38,9 +49,4 @@ func fetchURL(url string) (*http.Response, error) {
 	}
 
 	return resp, nil
-}
-
-// Error implements the error interface
-func (e *FetchError) Error() string {
-	return fmt.Sprintf("URL returned status %d: %s", e.StatusCode, e.Message)
 }

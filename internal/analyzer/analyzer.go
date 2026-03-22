@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"context"
 	"fmt"
 	"io"
 )
@@ -23,16 +24,16 @@ func New() *Analyzer {
 }
 
 // Analyze fetches and analyzes the given URL
-func (a *Analyzer) Analyze(url string) (*Result, error) {
-	resp, err := fetchURL(url)
+func (a *Analyzer) Analyze(ctx context.Context, url string) (*Result, error) {
+	resp, err := fetchURL(ctx, url)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to fetch URL: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
 
 	body, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	pageData, err := parseHTML(string(body))
@@ -41,7 +42,7 @@ func (a *Analyzer) Analyze(url string) (*Result, error) {
 	}
 
 	// concurrently check all links
-	linkSummary := checkLinks(pageData.Links, url)
+	linkSummary := checkLinks(ctx, pageData.Links, url)
 
 	return &Result{
 		HTMLVersion:       pageData.HTMLVersion,

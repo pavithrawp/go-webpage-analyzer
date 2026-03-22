@@ -2,6 +2,7 @@ package handler
 
 import (
 	"bytes"
+	"context"
 	"encoding/json"
 	"fmt"
 	"html/template"
@@ -19,7 +20,7 @@ type mockAnalyzer struct {
 	err    error
 }
 
-func (m *mockAnalyzer) Analyze(url string) (*analyzer.Result, error) {
+func (m *mockAnalyzer) Analyze(ctx context.Context, url string) (*analyzer.Result, error) {
 	return m.result, m.err
 }
 

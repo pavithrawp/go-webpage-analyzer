@@ -1,6 +1,7 @@
 package analyzer
 
 import (
+	"context"
 	"errors"
 	"net/http"
 	"net/http/httptest"
@@ -17,7 +18,7 @@ func TestFetchURL_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
-	resp, err := fetchURL(server.URL)
+	resp, err := fetchURL(context.Background(), server.URL)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -35,7 +36,7 @@ func TestFetchURL_NotFound(t *testing.T) {
 	}))
 	defer server.Close()
 
-	_, err := fetchURL(server.URL)
+	_, err := fetchURL(context.Background(), server.URL)
 	if err == nil {
 		t.Fatal("expected an error for 404 response, got nil")
 	}
@@ -43,7 +44,7 @@ func TestFetchURL_NotFound(t *testing.T) {
 
 // TestFetchURL_Unreachable tests that fetchURL returns an error for an unreachable URL
 func TestFetchURL_Unreachable(t *testing.T) {
-	_, err := fetchURL("http://localhost:19999")
+	_, err := fetchURL(context.Background(), "http://localhost:19999")
 	if err == nil {
 		t.Fatal("expected an error for unreachable URL, got nil")
 	}
@@ -56,7 +57,7 @@ func TestFetchURL_StatusCode(t *testing.T) {
 	}))
 	defer server.Close()
 
-	_, err := fetchURL(server.URL)
+	_, err := fetchURL(context.Background(), server.URL)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}
