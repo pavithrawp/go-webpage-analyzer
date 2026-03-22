@@ -3,6 +3,7 @@ package analyzer
 import (
 	"fmt"
 	"strings"
+	"io"
 
 	"golang.org/x/net/html"
 )
@@ -17,8 +18,8 @@ type pageData struct {
 }
 
 // parseHTML parses the HTML document and extracts all page data
-func parseHTML(body string) (*pageData, error) {
-	doc, err := html.Parse(strings.NewReader(body))
+func parseHTML(r io.Reader) (*pageData, error) {
+	doc, err := html.Parse(r)
 	if err != nil {
 		return nil, fmt.Errorf("failed to parse HTML: %w", err)
 	}
