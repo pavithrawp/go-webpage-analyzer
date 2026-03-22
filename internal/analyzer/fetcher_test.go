@@ -18,7 +18,8 @@ func TestFetchURL_Success(t *testing.T) {
 	}))
 	defer server.Close()
 
-	resp, err := fetchURL(context.Background(), server.URL)
+	a := New()
+	resp, err := a.fetchURL(context.Background(), server.URL)
 	if err != nil {
 		t.Fatalf("expected no error, got %v", err)
 	}
@@ -36,7 +37,8 @@ func TestFetchURL_NotFound(t *testing.T) {
 	}))
 	defer server.Close()
 
-	_, err := fetchURL(context.Background(), server.URL)
+	a := New()
+	_, err := a.fetchURL(context.Background(), server.URL)
 	if err == nil {
 		t.Fatal("expected an error for 404 response, got nil")
 	}
@@ -44,7 +46,8 @@ func TestFetchURL_NotFound(t *testing.T) {
 
 // TestFetchURL_Unreachable tests that fetchURL returns an error for an unreachable URL
 func TestFetchURL_Unreachable(t *testing.T) {
-	_, err := fetchURL(context.Background(), "http://localhost:19999")
+	a := New()
+	_, err := a.fetchURL(context.Background(), "http://localhost:19999")
 	if err == nil {
 		t.Fatal("expected an error for unreachable URL, got nil")
 	}
@@ -57,7 +60,8 @@ func TestFetchURL_StatusCode(t *testing.T) {
 	}))
 	defer server.Close()
 
-	_, err := fetchURL(context.Background(), server.URL)
+	a := New()
+	_, err := a.fetchURL(context.Background(), server.URL)
 	if err == nil {
 		t.Fatal("expected error, got nil")
 	}

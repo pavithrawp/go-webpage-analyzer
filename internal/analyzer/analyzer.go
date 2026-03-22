@@ -4,7 +4,12 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net/http"
+	"time"
 )
+
+// the maximum time allowed for a URL to respond
+const defaultTimeout = 10 * time.Second
 
 // Result holds the full analysis result of a web page
 type Result struct {
@@ -17,15 +22,26 @@ type Result struct {
 	InaccessibleLinks int            `json:"inaccessible_links"`
 }
 
-type Analyzer struct{}
+type Analyzer struct {
+	httpClient *http.Client
+}
 
 func New() *Analyzer {
-	return &Analyzer{}
+	return &Analyzer{
+		httpClient: &http.Client{
+			Timeout: defaultTimeout,
+			Transport: &http.Transport{
+				MaxIdleConns:        100,
+				MaxIdleConnsPerHost: 10,
+				IdleConnTimeout:     90 * time.Second,
+			},
+		},
+	}
 }
 
 // Analyze fetches and analyzes the given URL
 func (a *Analyzer) Analyze(ctx context.Context, url string) (*Result, error) {
-	resp, err := fetchURL(ctx, url)
+	resp, err := a.fetchURL(ctx, url)
 	if err != nil {
 		return nil, fmt.Errorf("failed to fetch URL: %w", err)
 	}
@@ -42,7 +58,7 @@ func (a *Analyzer) Analyze(ctx context.Context, url string) (*Result, error) {
 	}
 
 	// concurrently check all links
-	linkSummary := checkLinks(ctx, pageData.Links, url)
+	linkSummary := a.checkLinks(ctx, pageData.Links, url)
 
 	return &Result{
 		HTMLVersion:       pageData.HTMLVersion,
