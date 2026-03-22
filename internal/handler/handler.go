@@ -45,6 +45,10 @@ func (h *Handler) Index(w http.ResponseWriter, r *http.Request) {
 
 // Analyze handles POST /analyze and processes the URL analysis request
 func (h *Handler) Analyze(w http.ResponseWriter, r *http.Request) {
+
+	// limit request body to 1MB
+	r.Body = http.MaxBytesReader(w, r.Body, 1<<20)
+
 	var req analyzeRequest
 
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
