@@ -4,10 +4,10 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"html/template"
 	"log/slog"
 	"net/http"
-	"fmt"
 	"net/url"
 
 	"github.com/pavithrawp/go-webpage-analyzer/internal/analyzer"
