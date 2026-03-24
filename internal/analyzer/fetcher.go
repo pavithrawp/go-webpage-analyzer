@@ -16,6 +16,8 @@ type FetchError struct {
 const (
 	contentTypeHTML   = "text/html"
 	headerContentType = "Content-Type"
+	headerUserAgent   = "User-Agent"
+	userAgentValue    = "Mozilla/5.0 (compatible; WebpageAnalyzer/1.0)"
 )
 
 // Error implements the error interface
@@ -32,6 +34,9 @@ func (a *Analyzer) fetchURL(ctx context.Context, url string) (*http.Response, er
 	if err != nil {
 		return nil, fmt.Errorf("failed to create request: %w", err)
 	}
+
+	// set user agent to avoid being blocked by websites
+	req.Header.Set(headerUserAgent, userAgentValue)
 
 	resp, err := a.httpClient.Do(req)
 	if err != nil {
