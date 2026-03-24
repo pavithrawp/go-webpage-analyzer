@@ -121,21 +121,30 @@ func isInternalLink(link, baseURL string) bool {
 	return parsed.Host == base.Host
 }
 
-// isLinkAccessible checks if the link is accessible by making a HEAD request
+// isLinkAccessible checks if the link is accessible by making a HEAD request.
+// Falls back to GET if HEAD returns 405 Method Not Allowed.
 func (a *Analyzer) isLinkAccessible(ctx context.Context, link string) bool {
-	// used head just know if the link is alive.
-	req, err := http.NewRequestWithContext(ctx, http.MethodHead, link, nil)
+	accessible, status := a.checkStatus(ctx, http.MethodHead, link)
+	if !accessible && status == http.StatusMethodNotAllowed {
+		accessible, _ = a.checkStatus(ctx, http.MethodGet, link)
+	}
+	return accessible
+}
+
+// checkStatus makes an HTTP request and returns whether it succeeded and the status code
+func (a *Analyzer) checkStatus(ctx context.Context, method, link string) (bool, int) {
+	req, err := http.NewRequestWithContext(ctx, method, link, nil)
 	if err != nil {
-		return false
+		return false, 0
 	}
 
 	resp, err := a.httpClient.Do(req)
 	if err != nil {
-		return false
+		return false, 0
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	return resp.StatusCode < 400
+	return resp.StatusCode < 400, resp.StatusCode
 }
 
 // resolveLink converts relative URLs to full URLs
