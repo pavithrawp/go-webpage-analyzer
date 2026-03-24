@@ -32,22 +32,37 @@ func (a *Analyzer) checkLinks(ctx context.Context, links []string, baseURL strin
 		return &linkSummary{}
 	}
 
-	// converts relative URLs to full URLs
-	var resolvedLinks []string
+	summary := &linkSummary{}
+	seen := make(map[string]struct{})
+	var uniqueLinks []string
 	for _, link := range links {
 		resolved := resolveLink(link, baseURL)
-		if resolved != "" {
-			resolvedLinks = append(resolvedLinks, resolved)
+		if resolved == "" {
+			continue
+		}
+
+		// count ALL links including duplicates
+		if isInternalLink(resolved, baseURL) {
+			summary.InternalCount++
+		} else {
+			summary.ExternalCount++
+		}
+
+		// deduplicate only for accessibility checking
+		if _, exists := seen[resolved]; !exists {
+			seen[resolved] = struct{}{}
+			uniqueLinks = append(uniqueLinks, resolved)
 		}
 	}
 
-	if len(resolvedLinks) == 0 {
-		return &linkSummary{}
+	if len(uniqueLinks) == 0 {
+		return summary
 	}
 
+	// check accessibility only for unique links
 	// set the buffer size to the number of links. so that we can send all links into the channel without blocking
-	jobs := make(chan string, len(resolvedLinks))
-	results := make(chan linkResult, len(resolvedLinks))
+	jobs := make(chan string, len(uniqueLinks))
+	results := make(chan linkResult, len(uniqueLinks))
 
 	// start worker pool
 	var wg sync.WaitGroup
@@ -56,11 +71,9 @@ func (a *Analyzer) checkLinks(ctx context.Context, links []string, baseURL strin
 		go func() {
 			defer wg.Done()
 			for link := range jobs {
-				isInternal := isInternalLink(link, baseURL)
 				isAccessible := a.isLinkAccessible(ctx, link)
 				results <- linkResult{
 					URL:          link,
-					IsInternal:   isInternal,
 					IsAccessible: isAccessible,
 				}
 			}
@@ -68,7 +81,7 @@ func (a *Analyzer) checkLinks(ctx context.Context, links []string, baseURL strin
 	}
 
 	// send resolved links to workers
-	for _, link := range resolvedLinks {
+	for _, link := range uniqueLinks {
 		jobs <- link
 	}
 	close(jobs)
@@ -79,15 +92,7 @@ func (a *Analyzer) checkLinks(ctx context.Context, links []string, baseURL strin
 		close(results)
 	}()
 
-	// collect results
-	summary := &linkSummary{}
 	for result := range results {
-		summary.Results = append(summary.Results, result)
-		if result.IsInternal {
-			summary.InternalCount++
-		} else {
-			summary.ExternalCount++
-		}
 		if !result.IsAccessible {
 			summary.InaccessibleCount++
 		}
@@ -116,21 +121,30 @@ func isInternalLink(link, baseURL string) bool {
 	return parsed.Host == base.Host
 }
 
-// isLinkAccessible checks if the link is accessible by making a HEAD request
+// isLinkAccessible checks if the link is accessible by making a HEAD request.
+// Falls back to GET if HEAD returns 405 Method Not Allowed.
 func (a *Analyzer) isLinkAccessible(ctx context.Context, link string) bool {
-	// used head just know if the link is alive.
-	req, err := http.NewRequestWithContext(ctx, http.MethodHead, link, nil)
+	accessible, status := a.checkStatus(ctx, http.MethodHead, link)
+	if !accessible && status == http.StatusMethodNotAllowed {
+		accessible, _ = a.checkStatus(ctx, http.MethodGet, link)
+	}
+	return accessible
+}
+
+// checkStatus makes an HTTP request and returns whether it succeeded and the status code
+func (a *Analyzer) checkStatus(ctx context.Context, method, link string) (bool, int) {
+	req, err := http.NewRequestWithContext(ctx, method, link, nil)
 	if err != nil {
-		return false
+		return false, 0
 	}
 
 	resp, err := a.httpClient.Do(req)
 	if err != nil {
-		return false
+		return false, 0
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	return resp.StatusCode < 400
+	return resp.StatusCode < 400, resp.StatusCode
 }
 
 // resolveLink converts relative URLs to full URLs

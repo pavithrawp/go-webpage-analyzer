@@ -116,3 +116,20 @@ func TestCheckLinks(t *testing.T) {
 		t.Errorf("expected 0 inaccessible links, got %d", summary.InaccessibleCount)
 	}
 }
+
+// TestIsLinkAccessible_HeadNotAllowed tests that GET fallback works when HEAD returns 405
+func TestIsLinkAccessible_HeadNotAllowed(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.Method == http.MethodHead {
+			w.WriteHeader(http.StatusMethodNotAllowed)
+			return
+		}
+		w.WriteHeader(http.StatusOK)
+	}))
+	defer server.Close()
+
+	a := New()
+	if !a.isLinkAccessible(context.Background(), server.URL) {
+		t.Error("expected link to be accessible via GET fallback")
+	}
+}
