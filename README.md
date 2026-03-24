@@ -209,7 +209,6 @@ make clean          # Remove build artifacts
 - Add support for JavaScript-rendered pages using a headless browser
 - Add caching layer
 - Add rate limiting
-- Add fallback from HEAD to GET for link accessibility checks since some servers block HEAD requests
 - Add streaming HTML parsing to avoid loading the full page into memory for very large pages
 - Export results as PDF or JSON
 
