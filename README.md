@@ -148,6 +148,8 @@ go test ./... -cover
 ```bash
 go run cmd/server/main.go
 ```
+The application will start on `http://localhost:8080`.
+
 
 ## Running With Docker
  
