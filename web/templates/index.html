@@ -58,7 +58,8 @@
                 <button
                     id="analyzeBtn"
                     onclick="analyze()"
-                    class="px-6 py-3 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-gray-700 transition flex items-center gap-2 disabled:opacity-50"
+                    disabled
+                    class="px-6 py-3 bg-gray-900 text-white text-sm font-medium rounded-xl hover:bg-gray-700 transition flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                 >
                     <span id="btnText">Analyze</span>
                     <div id="spinner" class="spinner hidden"></div>
@@ -116,6 +117,12 @@
     </main>
 
     <script>
+
+        document.getElementById('urlInput').addEventListener('input', function() {
+            const btn = document.getElementById('analyzeBtn')
+            btn.disabled = this.value.trim() === ''
+        })
+
         async function analyze() {
             const url = document.getElementById('urlInput').value.trim()
             const btn = document.getElementById('analyzeBtn')
