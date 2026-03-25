@@ -6,43 +6,34 @@ A web application built in Go that analyzes the structure and content of any web
 
 Go Webpage Analyzer accepts a URL as input and returns a detailed analysis of the web page including HTML version, page title, heading structure, link analysis, and login form detection.
 
-
-
-## Architecture
-```mermaid
-graph TD
-    A[User] -->|Enter URL| B[Frontend]
-    B -->|POST /analyze| C[Handler]
-    C --> D[Analyzer]
-    D --> E[Fetcher]
-    D --> F[Parser]
-    D --> G[Link Checker]
-    G -->|Concurrent Workers| H[External URLs]
-```
-
-## Project Structure
+## Features
  
-```
-go-webpage-analyzer/
-├── cmd/server/          # Application entry point
-├── internal/
-│   ├── analyzer/        # Core analysis engine
-│   │   ├── analyzer.go  # Orchestrates the full analysis
-│   │   ├── fetcher.go   # Fetches raw HTML from a given URL
-│   │   ├── parser.go    # Parses HTML and extracts data
-│   │   └── links.go     # Concurrent link accessibility checker
-│   └── handler/         # HTTP request handlers
-├── web/
-│   └── templates/       # HTML templates
-```
+- **HTML Version Detection** — Identifies the HTML version from the DOCTYPE declaration
+- **Page Title** — Extracts the full page title including HTML entities
+- **Heading Analysis** — Counts headings by level (h1-h6)
+- **Link Analysis** — Identifies and counts internal vs external links
+- **Inaccessible Links** — Concurrently checks all links using a worker pool
+- **Login Form Detection** — Detects presence of login forms by looking for password inputs
+- **Error Handling** — Returns meaningful JSON error messages with HTTP status codes
+- **Structured Logging** — Uses Go's slog for structured logging
+- **Profiling** — pprof endpoints available at /debug/pprof/ (protected with basic auth)
 
-### Component Responsibilities
+
+## Technology Stack
  
-- **Fetcher** — Takes a URL and returns the raw HTML response. Handles timeouts and unreachable URLs.
-- **Parser** — Reads the HTML and extracts the title, HTML version, headings, links, and login form detection.
-- **Link Checker** — Takes the raw list of links from the parser and concurrently checks each one.
-- **Analyzer** — Orchestrates fetcher, parser, and link checker and returns the final result.
+### Backend
+- Language: Go 1.26+
+- HTTP Server: net/http 
+- HTML Parsing: golang.org/x/net/html
+- Logging: log/slog
+- Profiling: net/http/pprof
  
+### DevOps
+- Docker + Docker Compose
+- Makefile
+- GitHub Actions (CI/CD)
+
+
 ## API
  
 | Method | Endpoint | Description |
@@ -87,25 +78,6 @@ Content-Type: application/json
 }
 ```
 
-## Screenshots
-
-![Analysis Form](web/static/images/image1.png)
-![Analysis Results](web/static/images/image2.png)
-
-## Technology Stack
- 
-### Backend
-- Language: Go 1.26+
-- HTTP Server: net/http 
-- HTML Parsing: golang.org/x/net/html
-- Logging: log/slog
-- Profiling: net/http/pprof
- 
-### DevOps
-- Docker + Docker Compose
-- Makefile
-- GitHub Actions (CI/CD)
-
 ## External Dependencies
  
 | Package | Purpose |
@@ -114,44 +86,69 @@ Content-Type: application/json
 | golang.org/x/net/html | HTML parsing |
 
 
+## Architecture
+```mermaid
+graph TD
+    A[User] -->|Enter URL| B[Frontend]
+    B -->|POST /analyze| C[Handler]
+    C --> D[Analyzer]
+    D --> E[Fetcher]
+    D --> F[Parser]
+    D --> G[Link Checker]
+    G -->|Concurrent Workers| H[External URLs]
+```
 
-## Installation & Setup
+## Project Structure
  
-### 1. Clone the repository
+```
+go-webpage-analyzer/
+├── cmd/server/          # Application entry point
+├── internal/
+│   ├── analyzer/        # Core analysis engine
+│   │   ├── analyzer.go  # Orchestrates the full analysis
+│   │   ├── fetcher.go   # Fetches raw HTML from a given URL
+│   │   ├── parser.go    # Parses HTML and extracts data
+│   │   └── links.go     # Concurrent link accessibility checker
+│   └── handler/         # HTTP request handlers
+├── web/
+│   └── templates/       # HTML templates
+```
+
+### Component Responsibilities
+ 
+- **Fetcher** — Takes a URL and returns the raw HTML response. Handles timeouts and unreachable URLs.
+- **Parser** — Reads the HTML and extracts the title, HTML version, headings, links, and login form detection.
+- **Link Checker** — Takes the raw list of links from the parser and concurrently checks each one.
+- **Analyzer** — Orchestrates fetcher, parser, and link checker and returns the final result.
+
+ ## Installation & Setup
+ 
+### Clone the repository
 ```bash
 git clone https://github.com/pavithrawp/go-webpage-analyzer.git
 cd go-webpage-analyzer
 ```
 
-### 2. Install dependencies
+### Install dependencies
 ```bash
 go mod download
 ```
  
-### 3. Set up environment variables
+### Set up environment variables
 ```bash
 cp .env.example .env
 ```
 
-### 4. Running Tests
- 
-```bash
-go test ./...
-```
- 
-With coverage:
-```bash
-go test ./... -cover
-```
- 
-### 5. Run the application
+
+## Running the Application
+
+### Run Locally
 ```bash
 go run cmd/server/main.go
 ```
 The application will start on `http://localhost:8080`.
 
-
-## Running With Docker
+### Run with Docker
  
 ```bash
 # Build and run with Docker Compose
@@ -162,8 +159,7 @@ docker build -t go-webpage-analyzer .
 docker run -p 8080:8080 --env-file .env go-webpage-analyzer
 ```
 
-
-## Makefile Commands
+### Makefile Commands
  
 ```bash
 make run            # Run the application
@@ -177,17 +173,21 @@ make docker-run     # Run Docker container
 make clean          # Remove build artifacts
 ```
 
-## Features
+## Running Tests
  
-- **HTML Version Detection** — Identifies the HTML version from the DOCTYPE declaration
-- **Page Title** — Extracts the full page title including HTML entities
-- **Heading Analysis** — Counts headings by level (h1-h6)
-- **Link Analysis** — Identifies and counts internal vs external links
-- **Inaccessible Links** — Concurrently checks all links using a worker pool
-- **Login Form Detection** — Detects presence of login forms by looking for password inputs
-- **Error Handling** — Returns meaningful JSON error messages with HTTP status codes
-- **Structured Logging** — Uses Go's slog for structured logging
-- **Profiling** — pprof endpoints available at /debug/pprof/ (protected with basic auth)
+```bash
+go test ./...
+```
+ 
+With coverage:
+```bash
+go test ./... -cover
+```
+
+## Screenshots
+
+![Analysis Form](web/static/images/image1.png)
+![Analysis Results](web/static/images/image2.png)
 
 ## Assumptions & Decisions
  
@@ -197,6 +197,14 @@ make clean          # Remove build artifacts
 - **Subdomains are treated as external** links.
 - **Anchor-only links** (e.g. `#section`) are excluded from link counts
 
+## Deployment Architecture
+```mermaid
+graph LR
+    A[Developer] -->|git push| B[GitHub]
+    B -->|GitHub Actions| C[Azure Container Registry]
+    C -->|Deploy| D[Azure Container Apps]
+    D -->|Serve| E[User]
+```
 
 ## Challenges & Approaches
  
@@ -214,14 +222,6 @@ make clean          # Remove build artifacts
 - Add streaming HTML parsing to avoid loading the full page into memory for very large pages
 - Export results as PDF or JSON
 
-## Deployment Architecture
-```mermaid
-graph LR
-    A[Developer] -->|git push| B[GitHub]
-    B -->|GitHub Actions| C[Azure Container Registry]
-    C -->|Deploy| D[Azure Container Apps]
-    D -->|Serve| E[User]
-```
 
 ## Live Demo
 
@@ -229,7 +229,6 @@ The application is deployed and accessible at:
 ```
 https://go-webpage-analyzer.blacksky-dcf644d4.southindia.azurecontainerapps.io/
 ```
-
 > Note: The application is publicly accessible for evaluation purposes.
 > In a production environment authentication would be added.
 
